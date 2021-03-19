@@ -18,4 +18,6 @@
  ## Assembly
  The order the Buttons are wired is not important because you will assigen them in the Flight Simulator. It is only important to wire all the Buttons to the MCP23017 Port Expander and the Rotary Encoder directly to the Arduino. Also the reset pin on MCP23017 has to be tied to 5V and the address pins to ground.
 
- 
+ ![](https://github.com/GameOver94/open-AutopilotPanel/blob/develop/figures/assembly1.jpg)
+ ![](https://github.com/GameOver94/open-AutopilotPanel/blob/develop/figures/assembly2.jpg)
+ ![](https://github.com/GameOver94/open-AutopilotPanel/blob/develop/figures/assembly3.jpg)
