@@ -65,7 +65,6 @@ button VS             18
 button YD             12
 */
 
-
 // Setup the MCP23017 GPIO expander -----------------------------------------------------------
 Adafruit_MCP23017 mcp;
 
@@ -75,12 +74,12 @@ Rotary rotALT = Rotary(rotALT_A, rotALT_B);
 Rotary rotVS = Rotary(rotVS_A, rotVS_B);
 
 // Global variables
-const uint8_t numButtons = 19;              // starts at 0 | The Joystick library defines 32 buttons by default
-unsigned long releaseTime[numButtons];      // Stores the release time for the buttons (rotary encoder).
-bool rotaryPressed[numButtons] = {false};   // Stores the button state for the rotary enceder (gets automaticly reset)
-bool buttonPressed[numButtons] = {false};   // Stores the button state for other Buttons (don't get automaticly reset)
-const int holdTime = 20;                    // time the a Button is held down in ms (rotaty encoder)
-uint16_t lastButtonState = 0;               // Stores the button state for the MCP23017 Port Expander
+const uint8_t numButtons = 19;            // starts at 0 | The Joystick library defines 32 buttons by default
+unsigned long releaseTime[numButtons];    // Stores the release time for the buttons (rotary encoder).
+bool rotaryPressed[numButtons] = {false}; // Stores the button state for the rotary enceder (gets automaticly reset)
+bool buttonPressed[numButtons] = {false}; // Stores the button state for other Buttons (don't get automaticly reset)
+const int holdTime = 50;                  // time the a Button is held down in ms (rotaty encoder)
+uint16_t lastButtonState = 0;             // Stores the button state for the MCP23017 Port Expander
 
 void setup()
 {
@@ -105,8 +104,8 @@ void setup()
   rotVS.begin(true);
 
   // Setup aditional pins
-  pinMode(rotHDGButton,INPUT_PULLUP);
-  pinMode(rotALTButton,INPUT_PULLUP);
+  pinMode(rotHDGButton, INPUT_PULLUP);
+  pinMode(rotALTButton, INPUT_PULLUP);
 }
 
 void loop()
@@ -135,7 +134,7 @@ void pollButton()
     {
       buttonState[i] = newButtonState & (1 << (i)) ? 1 : 0;
     }
-    
+
     updateButton(buttonState);
   }
 }
@@ -143,7 +142,7 @@ void pollButton()
 // Update the Joystick with the input from the Buttons connectet to the MCP
 void updateButton(boolean buttonState[15])
 {
-  for (uint8_t i = 0; i < 12; i++) 
+  for (uint8_t i = 0; i < 12; i++)
   {
     Joystick.setButton(i + 8, !buttonState[i]);
   }
@@ -210,10 +209,14 @@ void release()
 
   for (int i = 0; i < numButtons; i++)
   {
-    if (releaseTime[i] < millis() && rotaryPressed[i])
+    if (releaseTime[i] < millis())
     {
       Joystick.setButton(i, 0);
-      rotaryPressed[i] = false;
+      releaseTime[i] = millis() + holdTime;
+      if (rotaryPressed[i])
+      {
+        rotaryPressed[i] = false;
+      }
     };
   };
 }
