@@ -6,35 +6,35 @@
 #include <Joystick.h>
 
 // Pin Mapping --------------------------------------------------------------------------------
-#define ALT 8
-#define AP 7
-#define APR 4
-#define FD 2
-#define FLC 11
-#define HDG 0
-#define LVL 6
-#define NAV 5
-#define TRK 1
-#define VN 10
-#define VS 9
-#define YD 3
+#define HDG 11    // Key 1
+#define TRK 10    // Key 2
+#define NAV 9     // Key 3
+#define APR 8     // Key 4
+#define FD 7      // Key 5
+#define AP 6      // Key 6
+#define YD 5      // Key 7
+#define LVL 4     // Key 8
+#define VS 3      // Key 9
+#define VN 2      // Key 10
+#define FLC 1     // Key 11
+#define ALT 0     // Key 12
 
-#define rotHDGButton 6 // Pushbutton
-#define rotHDG_A 4     // Rotary A
-#define rotHDG_B 5     // Rotary B
+#define rotHDGButton 12     // SW2
+#define rotALTButton 13     // SW3
 
-#define rotALTButton 9 // Pushbutton
-#define rotALT_A 8     // Rotary A
-#define rotALT_B 7     // Rotary B
+#define rotHDG_A 6     // SW2
+#define rotHDG_B 7     // SW2
 
-#define rotVS_A 16 // Rotary A
-#define rotVS_B 10 // Rotary B
+#define rotALT_A 4     // SW3
+#define rotALT_B 5     // SW3
+
+#define rotVS_A 8 // SW1
+#define rotVS_B 9 // SW1
 
 // Function prototypes ------------------------------------------------------------------------
 void pollButton();
 void pollRotary();
-void pollRotaryButton();
-void updateButton(boolean buttonState[15]);
+void updateButton(boolean buttonState[16]);
 void release();
 
 // Setup the joystick library -----------------------------------------------------------------
@@ -42,14 +42,12 @@ void release();
 Joystick_ Joystick;
 
 /* Joystock Button Mapping
-rotary HDG right      1
-rotary HDG left       2
-rotary HDG button     3
-rotary ALT right      4
-rotary ALT left       5
-rotary ALT button     6
-rotary VS up          7
-rotary VS down        8
+rotary HDG right      0
+rotary HDG left       1
+rotary ALT right      2
+rotary ALT left       3
+rotary VS up          4
+rotary VS down        5
 
 button ALT            17
 button AP             16
@@ -74,11 +72,11 @@ Rotary rotALT = Rotary(rotALT_A, rotALT_B);
 Rotary rotVS = Rotary(rotVS_A, rotVS_B);
 
 // Global variables
-const uint8_t numButtons = 19;            // starts at 0 | The Joystick library defines 32 buttons by default
-unsigned long releaseTime[numButtons];    // Stores the release time for the buttons (rotary encoder).
-bool rotaryPressed[numButtons] = {false}; // Stores the button state for the rotary enceder (gets automaticly reset)
-bool buttonPressed[numButtons] = {false}; // Stores the button state for other Buttons (don't get automaticly reset)
-const int holdTime = 50;                  // time the a Button is held down in ms (rotaty encoder)
+const uint8_t numRotary = 6;            // For each rotary encoder two (one per direction)
+unsigned long releaseTime[numRotary];    // Stores the release time for the buttons (rotary encoder).
+bool rotaryPressed[numRotary] = {false}; // Stores the button state for the rotary enceder (gets automaticly reset)
+const int rotaryHoldTime = 50;                  // time a Button is held down in ms (rotaty encoder)
+const int buttonHoldTime = 100;            // time a Button is held down in ms (buttons)
 uint16_t lastButtonState = 0;             // Stores the button state for the MCP23017 Port Expander
 
 void setup()
@@ -103,16 +101,12 @@ void setup()
   rotALT.begin(true);
   rotVS.begin(true);
 
-  // Setup aditional pins
-  pinMode(rotHDGButton, INPUT_PULLUP);
-  pinMode(rotALTButton, INPUT_PULLUP);
 }
 
 void loop()
 {
-  pollButton();
   pollRotary();
-  pollRotaryButton();
+  pollButton();
 
   release();
 }
@@ -122,17 +116,18 @@ void pollButton()
 {
   //We could also read each pin seperatly, however that will cause an I2C transfern for pin.
   //It's faster to read the whole register, and decode the register.
-  uint16_t newButtonState = mcp.readGPIOAB();
+  uint32_t newButtonState = mcp.readGPIOAB();
 
   if (lastButtonState != newButtonState)
   {
 
-    boolean buttonState[15];
+    boolean buttonState[16];
     lastButtonState = newButtonState;
+    uint16_t mask = 1;
 
-    for (uint8_t i = 0; i < 16; i++) // binary masking startig at the least significant bit
+    for (uint8_t i = 0; i <= 15; i++) // binary masking startig at the least significant bit
     {
-      buttonState[i] = newButtonState & (1 << (i)) ? 1 : 0;
+      buttonState[i] = newButtonState & (mask << i) ? 1 : 0;
     }
 
     updateButton(buttonState);
@@ -142,9 +137,9 @@ void pollButton()
 // Update the Joystick with the input from the Buttons connectet to the MCP
 void updateButton(boolean buttonState[15])
 {
-  for (uint8_t i = 0; i < 12; i++)
+  for (uint8_t i = 0; i < 15; i++)
   {
-    Joystick.setButton(i + 8, !buttonState[i]);
+    Joystick.setButton(i + 6, !buttonState[i]);
   }
 }
 
@@ -157,7 +152,7 @@ void pollRotary()
     if (!rotaryPressed[0 + resultHDG / 16 - 1]) // rejeckts input when button wasn't releast before
     {
       Joystick.setButton(0 + resultHDG / 16 - 1, 1);
-      releaseTime[0 + resultHDG / 16 - 1] = millis() + holdTime;
+      releaseTime[0 + resultHDG / 16 - 1] = millis() + rotaryHoldTime;
       rotaryPressed[0 + resultHDG / 16 - 1] = true;
     }
   }
@@ -165,54 +160,37 @@ void pollRotary()
   unsigned char resultALT = rotALT.process();
   if (resultALT)
   {
-    if (!rotaryPressed[3 + resultALT / 16 - 1]) // rejeckts input when button wasn't releast before
+    if (!rotaryPressed[2 + resultALT / 16 - 1]) // rejeckts input when button wasn't releast before
     {
-      Joystick.setButton(3 + resultALT / 16 - 1, 1);
-      releaseTime[3 + resultALT / 16 - 1] = millis() + holdTime;
-      rotaryPressed[3 + resultALT / 16 - 1] = true;
+      Joystick.setButton(2 + resultALT / 16 - 1, 1);
+      releaseTime[2 + resultALT / 16 - 1] = millis() + rotaryHoldTime;
+      rotaryPressed[2 + resultALT / 16 - 1] = true;
     }
   }
 
   unsigned char resultVS = rotVS.process();
   if (resultVS)
   {
-    if (!rotaryPressed[6 + resultVS / 16 - 1]) // rejeckts input when button wasn't releast before
+    if (!rotaryPressed[4 + resultVS / 16 - 1]) // rejeckts input when button wasn't releast before
     {
-      Joystick.setButton(6 + resultVS / 16 - 1, 1);
-      releaseTime[6 + resultVS / 16 - 1] = millis() + holdTime;
-      rotaryPressed[6 + resultVS / 16 - 1] = true;
+      Joystick.setButton(4 + resultVS / 16 - 1, 1);
+      releaseTime[4 + resultVS / 16 - 1] = millis() + rotaryHoldTime;
+      rotaryPressed[4 + resultVS / 16 - 1] = true;
     }
   }
 }
 
-// Updates the Joystick with the Button directly connectet to the Arduino
-void pollRotaryButton()
-{
-  boolean valHDG = !digitalRead(rotHDGButton);
-  if (buttonPressed[2] != valHDG)
-  {
-    Joystick.setButton(2, valHDG);
-    buttonPressed[2] = valHDG;
-  }
-
-  boolean valALT = !digitalRead(rotALTButton);
-  if (buttonPressed[5] != valALT)
-  {
-    Joystick.setButton(5, valALT);
-    buttonPressed[5] = valALT;
-  }
-}
 
 // Release buttons of the Joystick triggert bei the Rotary Encoder
 void release()
 {
 
-  for (int i = 0; i < numButtons; i++)
+  for (int i = 0; i < numRotary; i++)
   {
     if (releaseTime[i] < millis())
     {
       Joystick.setButton(i, 0);
-      releaseTime[i] = millis() + holdTime;
+      releaseTime[i] = millis() + rotaryHoldTime;
       if (rotaryPressed[i])
       {
         rotaryPressed[i] = false;
