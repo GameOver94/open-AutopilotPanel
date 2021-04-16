@@ -74,10 +74,10 @@ Rotary rotALT = Rotary(rotALT_A, rotALT_B);
 Rotary rotVS = Rotary(rotVS_A, rotVS_B);
 
 // Global variables
-const uint8_t numButtons = 19;            // starts at 0 | The Joystick library defines 32 buttons by default
-unsigned long releaseTime[numButtons];    // Stores the release time for the buttons (rotary encoder).
-bool rotaryPressed[numButtons] = {false}; // Stores the button state for the rotary enceder (gets automaticly reset)
-bool buttonPressed[numButtons] = {false}; // Stores the button state for other Buttons (don't get automaticly reset)
+const uint8_t numRotary = 9;            // The Joystick library defines 32 buttons by default
+unsigned long releaseTime[numRotary];    // Stores the release time for the buttons (rotary encoder).
+bool rotaryPressed[numRotary] = {false}; // Stores the button state for the rotary enceder (gets automaticly reset)
+bool buttonPressed[numRotary] = {false}; // Stores the button state for other Buttons (don't get automaticly reset)
 const int holdTime = 50;                  // time the a Button is held down in ms (rotaty encoder)
 uint16_t lastButtonState = 0;             // Stores the button state for the MCP23017 Port Expander
 
@@ -127,7 +127,7 @@ void pollButton()
   if (lastButtonState != newButtonState)
   {
 
-    boolean buttonState[15];
+    boolean buttonState[16];
     lastButtonState = newButtonState;
 
     for (uint8_t i = 0; i < 16; i++) // binary masking startig at the least significant bit
@@ -207,7 +207,7 @@ void pollRotaryButton()
 void release()
 {
 
-  for (int i = 0; i < numButtons; i++)
+  for (int i = 0; i < numRotary; i++)
   {
     if (releaseTime[i] < millis())
     {
