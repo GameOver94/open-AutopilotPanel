@@ -74,7 +74,7 @@ Rotary rotALT = Rotary(rotALT_A, rotALT_B);
 Rotary rotVS = Rotary(rotVS_A, rotVS_B);
 
 // Global variables
-const uint8_t numRotary = 9;            // The Joystick library defines 32 buttons by default
+const uint8_t numRotary = 8;            // pins reserved for rotary encoders
 unsigned long releaseTime[numRotary];    // Stores the release time for the buttons (rotary encoder).
 bool rotaryPressed[numRotary] = {false}; // Stores the button state for the rotary enceder (gets automaticly reset)
 bool buttonPressed[numRotary] = {false}; // Stores the button state for other Buttons (don't get automaticly reset)
