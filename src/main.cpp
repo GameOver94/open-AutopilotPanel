@@ -49,18 +49,20 @@ rotary ALT left       3
 rotary VS up          4
 rotary VS down        5
 
-button ALT            17
-button AP             16
-button APR            13
-button FD             11
-button FLC            20
-button HDG            9
-button LVL            15
-button NAV            14
-button TRK            10
-button VN             19
-button VS             18
-button YD             12
+button ALT            6
+button AP             12
+button APR            14
+button FD             13
+button FLC            7
+button HDG            17
+button LVL            10
+button NAV            15
+button TRK            16
+button VN             8
+button VS             9
+button YD             11
+rotary ALT            19
+rotary HDG            18
 */
 
 // Setup the MCP23017 GPIO expander -----------------------------------------------------------
