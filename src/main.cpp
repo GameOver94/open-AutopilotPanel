@@ -25,11 +25,13 @@
 #define rotHDG_A 6     // SW2
 #define rotHDG_B 7     // SW2
 
-#define rotALT_A 4     // SW3
-#define rotALT_B 5     // SW3
+#define rotALT_A 5     // SW3
+#define rotALT_B 4     // SW3
 
 #define rotVS_A 8 // SW1
 #define rotVS_B 9 // SW1
+
+#define pwrLED 10
 
 // Function prototypes ------------------------------------------------------------------------
 void pollButton();
@@ -102,6 +104,10 @@ void setup()
   rotHDG.begin(true);
   rotALT.begin(true);
   rotVS.begin(true);
+
+  // switch on power LED
+  pinMode(pwrLED, OUTPUT);
+  digitalWrite(pwrLED, HIGH);
 
 }
 
