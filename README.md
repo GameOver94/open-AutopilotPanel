@@ -9,6 +9,7 @@ A 3D printable autopilot panel for Microsoft Flightsimulator modeled after the G
 ## Uses Materials
  * 1 [Arduino Pro Micro](https://www.amazon.de/gp/product/B07J2Q3ZD5/ref=ppx_yo_dt_b_asin_title_o03_s00?ie=UTF8&psc=1)
  * 1 [MCP23017 I²C Port Expander](https://eu.mouser.com/ProductDetail/Microchip-Technology/MCP23017-E-SO?qs=usxtMOJb1Rz8hft7vV7YMQ==)
+   * Make shure to get the MCP23017-E/SO variant. There are other footpirnts of the chip available. For hand wiring get a bearkout board to make live easier.
  * 3 [Rotary Encoder](https://www.amazon.de/gp/product/B08728PS6N/ref=ppx_yo_dt_b_asin_title_o01_s00?ie=UTF8&psc=1)
  * 12 [Miro Pushbuttons 6x6x5](https://www.amazon.de/gp/product/B07Q1BXV7T/ref=ppx_yo_dt_b_asin_title_o04_s00?ie=UTF8&psc=1)
  * 26 AWG silicone wire
