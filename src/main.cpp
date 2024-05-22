@@ -1,7 +1,6 @@
 #include <Arduino.h>
 #include <Wire.h>
-
-#include <Adafruit_MCP23017.h>
+#include <Adafruit_MCP23X17.h>
 #include <Rotary.h>
 #include <Joystick.h>
 
@@ -36,14 +35,14 @@
 // Function prototypes ------------------------------------------------------------------------
 void pollButton();
 void pollRotary();
-void updateButton(boolean buttonState[16]);
+void updateButton(bool buttonState[16]);
 void release();
 
 // Setup the joystick library -----------------------------------------------------------------
 /* Create the Joystick */
 Joystick_ Joystick;
 
-/* Joystock Button Mapping
+/* Joystick Button Mapping
 rotary HDG right      0
 rotary HDG left       1
 rotary ALT right      2
@@ -68,7 +67,7 @@ rotary HDG            18
 */
 
 // Setup the MCP23017 GPIO expander -----------------------------------------------------------
-Adafruit_MCP23017 mcp;
+Adafruit_MCP23X17 mcp;
 
 // Setup rotary encoder------------------------------------------------------------------------
 Rotary rotHDG = Rotary(rotHDG_A, rotHDG_B);
@@ -78,10 +77,10 @@ Rotary rotVS = Rotary(rotVS_A, rotVS_B);
 // Global variables
 const uint8_t numRotary = 6;            // For each rotary encoder two (one per direction)
 unsigned long releaseTime[numRotary];    // Stores the release time for the buttons (rotary encoder).
-bool rotaryPressed[numRotary] = {false}; // Stores the button state for the rotary enceder (gets automaticly reset)
-const int rotaryHoldTime = 50;                  // time a Button is held down in ms (rotaty encoder)
-const int buttonHoldTime = 100;            // time a Button is held down in ms (buttons)
-uint16_t lastButtonState = 0;             // Stores the button state for the MCP23017 Port Expander
+bool rotaryPressed[numRotary] = {false}; // Stores the button state for the rotary encoder (gets automatically reset)
+const int rotaryHoldTime = 50;           // time a Button is held down in ms (rotary encoder)
+const int buttonHoldTime = 100;          // time a Button is held down in ms (buttons)
+uint16_t lastButtonState = 0;            // Stores the button state for the MCP23017 Port Expander
 
 void setup()
 {
@@ -92,48 +91,42 @@ void setup()
   Joystick.begin();
 
   // Initialize the MCP23017
-  mcp.begin(); // use default address 0
+  mcp.begin_I2C(); // use default address 0x20
 
   for (int i = 0; i <= 15; i++)
   {
-    mcp.pinMode(i, INPUT); // set pin as input
-    mcp.pullUp(i, HIGH);   // turn on a 100K pullup internally
+    mcp.pinMode(i, INPUT_PULLUP); // set pin as input with internal pull-up
   }
 
   // Initialize the Rotary Encoder
-  rotHDG.begin(true);
-  rotALT.begin(true);
-  rotVS.begin(true);
+  // No need to call begin
 
-  // switch on power LED
+  // Switch on power LED
   pinMode(pwrLED, OUTPUT);
   digitalWrite(pwrLED, HIGH);
-
 }
 
 void loop()
 {
   pollRotary();
   pollButton();
-
   release();
 }
 
-// Polling the MCPs to ceck for changes
+// Polling the MCPs to check for changes
 void pollButton()
 {
-  //We could also read each pin seperatly, however that will cause an I2C transfern for pin.
-  //It's faster to read the whole register, and decode the register.
+  // We could also read each pin separately; however, that will cause an I2C transfer for each pin.
+  // It's faster to read the whole register and decode the register.
   uint32_t newButtonState = mcp.readGPIOAB();
 
   if (lastButtonState != newButtonState)
   {
-
-    boolean buttonState[16];
+    bool buttonState[16];
     lastButtonState = newButtonState;
     uint16_t mask = 1;
 
-    for (uint8_t i = 0; i <= 15; i++) // binary masking startig at the least significant bit
+    for (uint8_t i = 0; i <= 15; i++) // binary masking starting at the least significant bit
     {
       buttonState[i] = newButtonState & (mask << i) ? 1 : 0;
     }
@@ -142,8 +135,8 @@ void pollButton()
   }
 }
 
-// Update the Joystick with the input from the Buttons connectet to the MCP
-void updateButton(boolean buttonState[15])
+// Update the Joystick with the input from the Buttons connected to the MCP
+void updateButton(bool buttonState[16])
 {
   for (uint8_t i = 0; i < 15; i++)
   {
@@ -157,7 +150,7 @@ void pollRotary()
   unsigned char resultHDG = rotHDG.process();
   if (resultHDG)
   {
-    if (!rotaryPressed[0 + resultHDG / 16 - 1]) // rejeckts input when button wasn't releast before
+    if (!rotaryPressed[0 + resultHDG / 16 - 1]) // rejects input when button wasn't released before
     {
       Joystick.setButton(0 + resultHDG / 16 - 1, 1);
       releaseTime[0 + resultHDG / 16 - 1] = millis() + rotaryHoldTime;
@@ -168,7 +161,7 @@ void pollRotary()
   unsigned char resultALT = rotALT.process();
   if (resultALT)
   {
-    if (!rotaryPressed[2 + resultALT / 16 - 1]) // rejeckts input when button wasn't releast before
+    if (!rotaryPressed[2 + resultALT / 16 - 1]) // rejects input when button wasn't released before
     {
       Joystick.setButton(2 + resultALT / 16 - 1, 1);
       releaseTime[2 + resultALT / 16 - 1] = millis() + rotaryHoldTime;
@@ -179,7 +172,7 @@ void pollRotary()
   unsigned char resultVS = rotVS.process();
   if (resultVS)
   {
-    if (!rotaryPressed[4 + resultVS / 16 - 1]) // rejeckts input when button wasn't releast before
+    if (!rotaryPressed[4 + resultVS / 16 - 1]) // rejects input when button wasn't released before
     {
       Joystick.setButton(4 + resultVS / 16 - 1, 1);
       releaseTime[4 + resultVS / 16 - 1] = millis() + rotaryHoldTime;
@@ -188,11 +181,9 @@ void pollRotary()
   }
 }
 
-
-// Release buttons of the Joystick triggert bei the Rotary Encoder
+// Release buttons of the Joystick triggered by the Rotary Encoder
 void release()
 {
-
   for (int i = 0; i < numRotary; i++)
   {
     if (releaseTime[i] < millis())
@@ -203,6 +194,6 @@ void release()
       {
         rotaryPressed[i] = false;
       }
-    };
-  };
+    }
+  }
 }
